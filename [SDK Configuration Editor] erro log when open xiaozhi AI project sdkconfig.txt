@@ -1,0 +1,137 @@
+[SDK Configuration Editor]
+Executing action: confserver
+Running cmake in directory C:\Users\212597558\AI_Tools\Xiaozhi-ESP32\build
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Users\212597558\.espressif\python_env\idf5.5_py3.11_env\Scripts\python.exe -DESP_PLATFORM=1 -DSDKCONFIG='c:\Users\212597558\AI_Tools\Xiaozhi-ESP32\sdkconfig' -DCCACHE_ENABLE=1 C:\Users\212597558\AI_Tools\Xiaozhi-ESP32"...
+-- Found Git: C:/Users/212597558/.espressif/tools/idf-git/2.39.2/cmd/git.exe (found version "2.39.2.windows.1")
+
+-- Minimal build - OFF
+
+-- ccache will be used for faster recompilation
+
+-- The C compiler identification is GNU 14.2.0
+
+-- The CXX compiler identification is GNU 14.2.0
+
+-- The ASM compiler identification is GNU
+
+-- Found assembler: C:/Users/212597558/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe
+
+-- Detecting C compiler ABI info
+
+-- Detecting C compiler ABI info - done
+
+-- Check for working C compiler: C:/Users/212597558/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe - skipped
+
+-- Detecting C compile features
+
+-- Detecting C compile features - done
+
+-- Detecting CXX compiler ABI info
+
+-- Detecting CXX compiler ABI info - done
+
+-- Check for working CXX compiler: C:/Users/212597558/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-g++.exe - skipped
+
+-- Detecting CXX compile features
+
+-- Detecting CXX compile features - done
+
+-- Building ESP-IDF components for target esp32
+
+NOTICE: espressif/esp_cam_sensor (1.5.2) is not compatible with the current target esp32, solving dependencies.
+
+
+NOTICE: Skipping optional dependency: espressif/esp_lcd_st7701
+
+
+NOTICE: Skipping optional dependency: espressif/esp_video
+
+
+NOTICE: Skipping optional dependency: espressif/esp_image_effects
+
+
+NOTICE: Skipping optional dependency: txp666/otto-emoji-gif-component
+
+
+NOTICE: Skipping optional dependency: wvirgil123/sscma_client
+
+
+NOTICE: Skipping optional dependency: waveshare/esp_lcd_jd9365_10_1
+
+
+NOTICE: Skipping optional dependency: waveshare/esp_lcd_st7703
+
+
+NOTICE: Skipping optional dependency: espressif/esp32_p4_function_ev_board
+
+
+NOTICE: Skipping optional dependency: espressif/esp_lcd_ili9881c
+
+NOTICE: Skipping optional dependency: espressif/esp_lcd_ek79007
+
+
+NOTICE: Skipping optional dependency: espressif/esp_hosted
+
+
+NOTICE: Skipping optional dependency: espressif/esp_wifi_remote
+
+
+NOTICE: Skipping optional dependency: espfriends/servo_dog_ctrl
+
+
+NOTICE: Skipping optional dependency: llgok/cpp_bus_driver
+
+
+NOTICE: Skipping optional dependency: espressif/bmi270_sensor
+
+
+.............................................................NOTICE: Updating lock file at C:\Users\212597558\AI_Tools\Xiaozhi-ESP32\dependencies.lock
+
+
+NOTICE: Processing 43 dependencies:
+
+NOTICE: [1/43] 78/esp-ml307 (3.5.2)
+
+
+NOTICE: [2/43] 78/esp-opus (1.0.5)
+
+
+NOTICE: [3/43] 78/esp-opus-encoder (2.4.1)
+
+
+NOTICE: [4/43] 78/esp-wifi-connect (2.6.2)
+
+
+NOTICE: [5/43] 78/esp_lcd_nv3023 (1.0.0)
+
+
+NOTICE: [6/43] 78/xiaozhi-fonts (1.5.5)
+
+
+---------------------------ERROR--------------------------
+
+CMake Error at C:/Users/212597558/esp/v5.5.1/esp-idf/tools/cmake/build.cmake:629 (message):
+  ERROR: File .component_hash or CHECKSUMS.json for component
+  "78/xiaozhi-fonts" in the managed components directory does not exist or
+  cannot be parsed.  These files are used by the component manager for
+  component integrity checks.  If they exist in the component source, please
+  ask the component maintainer to remove them.
+
+Call Stack (most recent call first):
+  C:/Users/212597558/esp/v5.5.1/esp-idf/tools/cmake/project.cmake:740 (idf_build_process)
+  CMakeLists.txt:13 (project)
+
+
+
+-----------------------END OF ERROR-----------------------
+-- Configuring incomplete, errors occurred!
+
+---------------------------ERROR--------------------------
+
+cmake failed with exit code 1, output of the command is in the C:\Users\212597558\AI_Tools\Xiaozhi-ESP32\build\log\idf_py_stderr_output_21552 and C:\Users\212597558\AI_Tools\Xiaozhi-ESP32\build\log\idf_py_stdout_output_21552
+
+-----------------------END OF ERROR-----------------------
+---------------------------ERROR--------------------------
+
+SDK Configuration editor confserver process exited with code: 2
+-----------------------END OF ERROR-----------------------
