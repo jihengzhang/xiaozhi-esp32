@@ -1,7 +1,8 @@
 {
   "idf.espIdfPathWin": "C:\\Users\\212597558\\esp\\v5.5.1\\esp-idf",
   "idf.toolsPathWin": "C:\\Users\\212597558\\.espressif",
-  "idf.pythonInstallPath": "C:\\Users\\212597558\\.espressif\\python_env\\idf5.5_py3.11_env\\Scripts\\python.exe",
+  // "idf.pythonInstallPath": "C:\\Users\\212597558\\.espressif\\python_env\\idf5.5_py3.11_env\\Scripts\\python.exe",
+  "idf.pythonBinPath": "C:\\Users\\212597558\\.espressif\\python_env\\idf5.5_py3.11_env\\Scripts\\python.exe",
   // "idf.pythonInstallPath": "C:\\Users\\212597558\\.espressif\\python_env\\idf5.5_py3.13_env\\Scripts\\python.exe",
   "idf.flashType": "UART",
   "idf.portWin": "COM28",
