@@ -2,7 +2,7 @@ tmp/
 components/
 managed_components/
 build/
-.vscode/
+# .vscode/
 .devcontainer/
 sdkconfig.old
 dependencies.lock
