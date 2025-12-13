@@ -133,50 +133,75 @@ MQTT handles device-cloud messaging:
 
 ```mermaid
 graph TD
-    subgraph Input Pipeline
-        Mic[("🎤 Microphone")] -->|I2S| Codec1[AudioCodec]
-        Codec1 -->|Raw PCM| InputTask[AudioInputTask]
+    subgraph Input Pipeline [Input Pipeline - ESP32S3]
+        Mic[("🎤 Microphone")] -->|I2S| Codec1[AudioCodec<br/>audio_codec.cc]
+        Codec1 -->|Raw PCM| InputTask[AudioInputTask<br/>audio_service.cc]
         InputTask -->|16kHz PCM| WW{WakeWord?}
         
-        WW -->|Not Detected| WakeEngine[WakeWord Engine]
-        WakeEngine -->|Wake Event| App1[Application]
+        WW -->|Not Detected| WakeEngine[WakeWord Engine<br/>wake_word.cc]
+        WakeEngine -->|Wake Event| App1[Application<br/>application.cc]
         
-        WW -->|Detected/Active| Processor[AudioProcessor]
-        Processor -->|Clean PCM| EncQueue[Encode Queue]
+        WW -->|Detected/Active| Processor[AudioProcessor<br/>afe_audio_processor.cc]
+        Processor -->|Clean PCM| EncQueue[Encode Queue<br/>audio_service.cc]
     end
 
-    subgraph Encoding
-        EncQueue --> OpusEnc[Opus Encoder]
-        OpusEnc -->|Opus Packets| SendQueue[Send Queue]
+    subgraph Encoding [Encoding - ESP32S3]
+        EncQueue --> OpusEnc[Opus Encoder<br/>opus_encoder_wrapper.cc]
+        OpusEnc -->|Opus Packets| SendQueue[Send Queue<br/>audio_service.cc]
     end
 
-    subgraph Network
-        SendQueue --> Protocol[Protocol Layer]
-        Protocol -->|WebSocket/MQTT| Cloud((☁️ Cloud Server))
+    subgraph Network [Network Layer]
+        SendQueue --> Protocol[Protocol Layer<br/>protocol.cc - ESP32S3]
+        Protocol -->|WebSocket| Cloud((☁️ Cloud Server))
         Cloud -->|ASR Result| Protocol
         Cloud -->|TTS Audio| Protocol
-        Protocol --> DecQueue[Decode Queue]
+        Protocol --> DecQueue[Decode Queue<br/>audio_service.cc - ESP32S3]
     end
 
-    subgraph Decoding
-        DecQueue --> OpusDec[Opus Decoder]
-        OpusDec -->|PCM| PlayQueue[Playback Queue]
+    subgraph CloudServices [Cloud Services - 云端]
+        Cloud --> ASR[语音识别 ASR]
+        ASR --> LLM[大语言模型 LLM]
+        LLM --> TTS[语音合成 TTS]
+        TTS --> Cloud
     end
 
-    subgraph Output Pipeline
-        PlayQueue --> OutputTask[AudioOutputTask]
-        OutputTask --> Codec2[AudioCodec]
+    subgraph Decoding [Decoding - ESP32S3]
+        DecQueue --> OpusDec[Opus Decoder<br/>opus_decoder_wrapper.cc]
+        OpusDec -->|PCM| PlayQueue[Playback Queue<br/>audio_service.cc]
+    end
+
+    subgraph Output Pipeline [Output Pipeline - ESP32S3]
+        PlayQueue --> OutputTask[AudioOutputTask<br/>audio_service.cc]
+        OutputTask --> Codec2[AudioCodec<br/>audio_codec.cc]
         Codec2 -->|I2S| Speaker[("🔊 Speaker")]
     end
 
-    subgraph Application Logic
-        App1[Application] --> StateManager[State Manager]
+    subgraph Application Logic [Application Logic - ESP32S3]
+        App1[Application<br/>application.cc] --> StateManager[State Manager<br/>application.cc]
         StateManager -->|Start Listening| InputTask
         StateManager -->|Stop Listening| InputTask
         Cloud -->|Intent/Response| App1
-        App1 -->|Execute| MCP[MCP Tools]
+        App1 -->|Execute| MCP[MCP Tools<br/>mcp_server.cc]
     end
 ```
+
+### Source File Reference Table
+
+| Component | Source File | Location | Description |
+|-----------|-------------|----------|-------------|
+| **AudioCodec** | `main/audio/audio_codec.cc` | ESP32S3 | I2S hardware abstraction |
+| **AudioInputTask** | `main/audio/audio_service.cc` | ESP32S3 | Audio capture task |
+| **AudioOutputTask** | `main/audio/audio_service.cc` | ESP32S3 | Audio playback task |
+| **AudioProcessor** | `main/audio/afe_audio_processor.cc` | ESP32S3 | AEC, VAD, noise suppression |
+| **WakeWord** | `main/audio/wake_word.cc` | ESP32S3 | Keyword detection |
+| **OpusEncoder** | `main/audio/opus_encoder_wrapper.cc` | ESP32S3 | PCM to Opus encoding |
+| **OpusDecoder** | `main/audio/opus_decoder_wrapper.cc` | ESP32S3 | Opus to PCM decoding |
+| **Protocol** | `main/protocols/protocol.cc` | ESP32S3 | WebSocket/MQTT communication |
+| **Application** | `main/application.cc` | ESP32S3 | Main application logic |
+| **MCP Server** | `main/mcp/mcp_server.cc` | ESP32S3 | Tool execution framework |
+| **ASR** | Cloud Service | ☁️ Cloud | Speech-to-text recognition |
+| **LLM** | Cloud Service | ☁️ Cloud | Large Language Model inference |
+| **TTS** | Cloud Service | ☁️ Cloud | Text-to-speech synthesis |
 
 ## Startup Sequence
 
