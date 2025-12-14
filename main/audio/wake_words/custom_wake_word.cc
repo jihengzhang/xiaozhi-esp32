@@ -105,7 +105,7 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
         return false;
     }
 
-    // 初始化 multinet (命令词识别)
+    // Initialize multinet (command recognition)
     mn_name_ = esp_srmodel_filter(models_, ESP_MN_PREFIX, language_.c_str());
     if (mn_name_ == nullptr) {
         ESP_LOGW(TAG, "Language '%s' multinet not found, falling back to any multinet model", language_.c_str());
@@ -121,11 +121,19 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     multinet_model_data_ = multinet_->create(mn_name_, duration_);
     multinet_->set_det_threshold(multinet_model_data_, threshold_);
     esp_mn_commands_clear();
+
+    // Validate commands before adding them
     for (int i = 0; i < commands_.size(); i++) {
-        esp_mn_commands_add(i + 1, commands_[i].command.c_str());
+        const auto& command = commands_[i];
+        if (command.command.empty() || command.text.empty() || command.action.empty()) {
+            ESP_LOGE(TAG, "Invalid command at index %d: command='%s', text='%s', action='%s'",
+                     i, command.command.c_str(), command.text.c_str(), command.action.c_str());
+            continue;
+        }
+        esp_mn_commands_add(i + 1, command.command.c_str());
     }
+
     esp_mn_commands_update();
-    
     multinet_->print_active_speech_commands(multinet_model_data_);
     return true;
 }
