@@ -158,11 +158,11 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
         }
         
         // Check if command contains spaces (likely not a valid phoneme string)
-        if (command.command.find(' ') != std::string::npos) {
-            ESP_LOGW(TAG, "Skipping command at index %d: '%s' contains spaces (not a valid phoneme format)", 
-                     i, command.command.c_str());
-            continue;
-        }
+        // if (command.command.find(' ') != std::string::npos) {
+        //     ESP_LOGW(TAG, "Skipping command at index %d: '%s' contains spaces (not a valid phoneme format)", 
+        //              i, command.command.c_str());
+        //     continue;
+        // }
         
         // Check if text and action are valid
         if (command.text.empty() || command.action.empty()) {
