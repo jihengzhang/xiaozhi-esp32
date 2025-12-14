@@ -8,6 +8,7 @@
 #include <esp_mn_models.h>
 #include <esp_mn_speech_commands.h>
 #include <cJSON.h>
+#include <string>
 
 
 #define TAG "CustomWakeWord"
@@ -113,28 +114,78 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     }
     if (mn_name_ == nullptr) {
         ESP_LOGE(TAG, "Failed to initialize multinet, mn_name is nullptr");
+        ESP_LOGE(TAG, "Multinet model not loaded correctly. Please check your model configuration.");
         ESP_LOGI(TAG, "Please refer to https://pcn7cs20v8cr.feishu.cn/wiki/CpQjwQsCJiQSWSkYEvrcxcbVnwh to add custom wake word");
         return false;
     }
 
+    // Verify selected model matches requested language (multinet supports multiple models)
+    if (!language_.empty()) {
+        std::string mn_name_str(mn_name_);
+        if (mn_name_str.find(language_) == std::string::npos) {
+            ESP_LOGE(TAG, "Multinet model language mismatch: requested='%s', selected='%s'", language_.c_str(), mn_name_);
+            ESP_LOGE(TAG, "Please ensure the correct language model is packaged (e.g., CN vs EN).");
+            return false;
+        }
+    }
+
     multinet_ = esp_mn_handle_from_name(mn_name_);
+    if (multinet_ == nullptr) {
+        ESP_LOGE(TAG, "Failed to get multinet handle from name: %s", mn_name_);
+        ESP_LOGE(TAG, "Multinet model not loaded correctly. Please check your model configuration.");
+        return false;
+    }
+
     multinet_model_data_ = multinet_->create(mn_name_, duration_);
+    if (multinet_model_data_ == nullptr) {
+        ESP_LOGE(TAG, "Failed to create multinet model data");
+        ESP_LOGE(TAG, "Multinet model not loaded correctly. Please check your model configuration.");
+        return false;
+    }
+
     multinet_->set_det_threshold(multinet_model_data_, threshold_);
     esp_mn_commands_clear();
 
-    // Validate commands before adding them
+    // Validate and add commands
+    int valid_command_count = 0;
     for (int i = 0; i < commands_.size(); i++) {
         const auto& command = commands_[i];
-        if (command.command.empty() || command.text.empty() || command.action.empty()) {
-            ESP_LOGE(TAG, "Invalid command at index %d: command='%s', text='%s', action='%s'",
-                     i, command.command.c_str(), command.text.c_str(), command.action.c_str());
+        
+        // Check if command is empty
+        if (command.command.empty()) {
+            ESP_LOGE(TAG, "Invalid command at index %d: command string is empty", i);
             continue;
         }
-        esp_mn_commands_add(i + 1, command.command.c_str());
+        
+        // Check if command contains spaces (likely not a valid phoneme string)
+        if (command.command.find(' ') != std::string::npos) {
+            ESP_LOGW(TAG, "Skipping command at index %d: '%s' contains spaces (not a valid phoneme format)", 
+                     i, command.command.c_str());
+            continue;
+        }
+        
+        // Check if text and action are valid
+        if (command.text.empty() || command.action.empty()) {
+            ESP_LOGE(TAG, "Invalid command at index %d: text='%s', action='%s'",
+                     i, command.text.c_str(), command.action.c_str());
+            continue;
+        }
+        
+        ESP_LOGI(TAG, "Adding command %d: '%s' -> '%s'", valid_command_count + 1, 
+                 command.command.c_str(), command.text.c_str());
+        esp_mn_commands_add(valid_command_count + 1, command.command.c_str());
+        valid_command_count++;
+    }
+
+    if (valid_command_count == 0) {
+        ESP_LOGW(TAG, "No valid commands found to add to multinet model");
+        ESP_LOGW(TAG, "Wake word detection may not work correctly without valid commands");
+        return false;
     }
 
     esp_mn_commands_update();
     multinet_->print_active_speech_commands(multinet_model_data_);
+    ESP_LOGI(TAG, "Multinet model initialized successfully with %d commands", valid_command_count);
     return true;
 }
 
