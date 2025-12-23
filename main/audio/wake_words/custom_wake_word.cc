@@ -150,7 +150,8 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     int valid_command_count = 0;
     for (int i = 0; i < commands_.size(); i++) {
         const auto& command = commands_[i];
-        
+        ESP_LOGI(TAG, "Processing command %d: '%s' -> '%s'", i + 1, 
+                 command.command.c_str(), command.text.c_str());
         // Check if command is empty
         if (command.command.empty()) {
             ESP_LOGE(TAG, "Invalid command at index %d: command string is empty", i);
@@ -221,6 +222,9 @@ void CustomWakeWord::Feed(const std::vector<int16_t>& data) {
         mn_state = multinet_->detect(multinet_model_data_, const_cast<int16_t*>(data.data()));
     }
     
+    // Log the state for all cases
+    // ESP_LOGI(TAG, "Multinet state: %d", mn_state);
+    
     if (mn_state == ESP_MN_STATE_DETECTING) {
         return;
     } else if (mn_state == ESP_MN_STATE_DETECTED) {
@@ -242,6 +246,8 @@ void CustomWakeWord::Feed(const std::vector<int16_t>& data) {
     } else if (mn_state == ESP_MN_STATE_TIMEOUT) {
         ESP_LOGD(TAG, "Command word detection timeout, cleaning state");
         multinet_->clean(multinet_model_data_);
+    } else {
+        ESP_LOGW(TAG, "Unknown multinet state: %d", mn_state);
     }
 }
 
