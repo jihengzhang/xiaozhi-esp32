@@ -1,7 +1,7 @@
 {
   "idf.espIdfPath": "/home/tester/esp/v5.5.1/esp-idf",
   "idf.toolsPath": "/home/tester/.espressif",
-  "idf.pythonInstallPath": "C:\\Users\\212597558\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
+  "idf.pythonInstallPath": "/home/tester/anaconda3/bin/python",
   "idf.flashType": "UART",
   "idf.port": "/dev/ttyACM0",
   "idf.monitorPort": "/dev/ttyACM0",
