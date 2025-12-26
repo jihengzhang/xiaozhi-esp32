@@ -51,16 +51,16 @@ graph TD
 ```mermaid
 graph TD
     subgraph Application
-        App[Application]
+        App[Application<br/>application.cc]
     end
 
     subgraph Audio Module
-        AudioService[AudioService]
-        AudioCodec[AudioCodec]
-        AudioProcessor[AudioProcessor]
-        WakeWord[WakeWord]
-        OpusEncoder[OpusEncoderWrapper]
-        OpusDecoder[OpusDecoderWrapper]
+        AudioService[AudioService<br/>audio_service.cc]
+        AudioCodec[AudioCodec<br/>audio_codec.cc]
+        AudioProcessor[AudioProcessor<br/>afe_audio_processor.cc]
+        WakeWord[WakeWord<br/>wake_word.cc]
+        OpusEncoder[OpusEncoderWrapper<br/>opus_encoder_wrapper.cc]
+        OpusDecoder[OpusDecoderWrapper<br/>opus_decoder_wrapper.cc]
         
         AudioService --> AudioCodec
         AudioService --> AudioProcessor
@@ -70,14 +70,14 @@ graph TD
     end
 
     subgraph Network Module
-        MQTT[MQTT Client]
-        WebSocket[WebSocket]
-        Protocol[Protocol Handler]
+        MQTT[MQTT Client<br/>mqtt_client.cc]
+        WebSocket[WebSocket<br/>websocket_client.cc]
+        Protocol[Protocol Handler<br/>protocol.cc]
     end
 
     subgraph MCP Module
-        MCP[MCP Server]
-        Tools[MCP Tools]
+        MCP[MCP Server<br/>mcp_server.cc]
+        Tools[MCP Tools<br/>mcp_server.cc/user_defined]
     end
 
     App --> AudioService
@@ -1014,35 +1014,6 @@ flowchart TD
     MessageLayer <-->|USB Cable| SerialPort
 ```
 
-### USB Communication Architecture
-
-```mermaid
-sequenceDiagram
-    participant ESP as ESP32S3
-    participant USB as USB CDC
-    participant Host as Host PC
-    participant Bridge as Bridge App
-    participant Cloud as Cloud Server
-
-    Note over ESP,Cloud: USB as Local Transport
-    
-    ESP->>USB: Initialize TinyUSB CDC
-    USB->>Host: Enumerate as COM Port
-    Host->>Bridge: Open Serial Port
-    
-    Note over ESP,Cloud: Message Exchange
-    
-    ESP->>USB: Send JSON Message
-    USB->>Host: Serial Data
-    Host->>Bridge: Parse Frame
-    Bridge->>Cloud: Forward via WebSocket
-    
-    Cloud->>Bridge: Response
-    Bridge->>Host: Serialize Frame
-    Host->>USB: Serial Write
-    USB->>ESP: Receive Message
-```
-
 ### USB Frame Protocol Design
 
 For reliable communication over USB CDC, implement a simple frame protocol:
@@ -1145,42 +1116,89 @@ flowchart TD
     Either --> Hybrid[Consider Hybrid Approach]
 ```
 
-### Hybrid USB + WiFi Architecture
-
-For maximum flexibility, use both USB and WiFi:
-
-```mermaid
-graph TD
-    subgraph ESP32S3Hybrid [ESP32S3 Hybrid Mode]
-        App[Application]
-        ProtocolRouter{Protocol Router}
-        
-        USBProto[USB Protocol]
-        WiFiProto[WiFi Protocol]
-        
-        App --> ProtocolRouter
-        ProtocolRouter --> USBProto
-        ProtocolRouter --> WiFiProto
-    end
-
-    subgraph Connections [Available Connections]
-        USBHost[USB Host PC]
-        CloudServer[Cloud Server]
-    end
-
-    USBProto <-->|USB Cable| USBHost
-    WiFiProto <-->|WiFi| CloudServer
-
-    subgraph UseCases [Use Cases]
-        Dev[Development: USB primary]
-        Prod[Production: WiFi primary]
-        Fallback[Fallback: USB when WiFi unavailable]
-    end
-```
-
 | Mode | Primary | Secondary | Use Case |
 |------|---------|-----------|----------|
 | **Development** | USB | WiFi optional | Fast iteration local debugging |
 | **Production** | WiFi | USB for debug | Normal operation |
 | **Offline** | USB | None | No internet scenarios |
 | **Failover** | WiFi | USB fallback | High availability |
+
+## Integrated Application Module & Voice Data Flow
+
+This diagram integrates the application module hierarchy, main source file names, audio data flow, event triggers, state machine transitions, and now also shows which module/file triggers each event.
+
+```mermaid
+flowchart TD
+    %% Audio Input Chain
+    Mic[🎤 Microphone] -->|I2S| AudioCodec[AudioCodec<br/>audio_codec.cc]
+    AudioCodec -->|Raw PCM| AudioInput[AudioInputTask<br/>audio_service.cc]
+    AudioInput -->|16kHz PCM| WakeWord[[WakeWord<br/>wake_word.cc]]
+    WakeWord --|No|--> AppIdle[Idle<br/>application.cc]
+    WakeWord --|Yes|--> AppWWD[WakeWordDetection<br/>application.cc]
+    AppWWD -->|Start Listening| AudioInput
+    AudioInput -->|Speech PCM| AudioProc[AudioProcessor<br/>afe_audio_processor.cc]
+    AudioProc -->|Clean PCM| OpusEnc[OpusEncoder<br/>opus_encoder_wrapper.cc]
+    OpusEnc -->|Opus| NetSendQ[Send Queue<br/>audio_service.cc]
+    NetSendQ -->|Opus| Protocol[Protocol Handler<br/>protocol.cc]
+    Protocol -->|WebSocket| Cloud((☁️ Cloud))
+
+    %% Cloud ASR/LLM/TTS
+    Cloud -->|ASR Result| Protocol
+    Protocol -->|ASR Event| AppProc[Processing<br/>application.cc]
+    AppProc -->|TTS Ready| AudioOutQ[Playback Queue<br/>audio_service.cc]
+    AudioOutQ --> OpusDec[OpusDecoder<br/>opus_decoder_wrapper.cc]
+    OpusDec -->|PCM| AudioOutput[AudioOutputTask<br/>audio_service.cc]
+    AudioOutput --> AudioCodec2[AudioCodec<br/>audio_codec.cc]
+    AudioCodec2 -->|I2S| Speaker[🔊 Speaker]
+
+    %% State Machine Transitions
+    AppIdle -- WakeEvent --> AppWWD
+    AppWWD -- WakeWord Detected --> AppListen[Listening<br/>application.cc]
+    AppListen -- VADEnd --> AppProc
+    AppProc -- TTSReady --> AppSpeak[Speaking<br/>application.cc]
+    AppSpeak -- TTSDone + Continuous --> AppListen
+    AppSpeak -- TTSDone --> AppWWD
+    AppSpeak -- Button Interrupt --> AppIdle
+
+    %% Events with Source Modules
+    subgraph Events
+        WakeEvt[WakeWord Event<br/>wake_word.cc]
+        VADStart[VAD Speech Start<br/>afe_audio_processor.cc]
+        VADEnd[VAD Speech End<br/>afe_audio_processor.cc]
+        TTSReadyEvt[TTS Audio Ready<br/>Cloud→protocol.cc]
+        TTSDoneEvt[TTS Playback Done<br/>audio_service.cc]
+        NetEvt[Network Event<br/>protocol.cc]
+        BtnEvt[Button Event<br/>gpio.h/application.cc]
+        OTAEvt[OTA Command<br/>mqtt_client.cc]
+        TimeoutEvt[Timeout<br/>application.cc]
+    end
+    WakeEvt -.->|triggers| AppWWD
+    VADStart -.->|triggers| AppListen
+    VADEnd -.->|triggers| AppProc
+    TTSReadyEvt -.->|triggers| AppSpeak
+    TTSDoneEvt -.->|triggers| AppSpeak
+    NetEvt -.->|triggers| Protocol
+    BtnEvt -.->|triggers| AppIdle
+    OTAEvt -.->|triggers| AppProc
+    TimeoutEvt -.->|triggers| AppIdle
+
+    %% MCP Tool Call Path
+    Protocol -- tool_call --> MCP[MCP Server<br/>mcp_server.cc]
+    MCP --> Tools[MCP Tools<br/>mcp_server.cc/user_defined]
+    Tools -- tool_result --> MCP
+    MCP -- tool_result --> Protocol
+
+    %% Legend
+    classDef file fill:#e3f2fd,stroke:#2196f3,stroke-width:1px;
+    class AudioCodec,AudioCodec2,AudioInput,AudioProc,OpusEnc,OpusDec,AudioOutput,Protocol,MCP,Tools file;
+    class AppIdle,AppWWD,AppListen,AppProc,AppSpeak file;
+```
+
+**Legend:**
+- Blue nodes = main C++ source files
+- Solid arrows = audio/data flow
+- Dashed arrows = event triggers
+- State nodes = application FSM states (application.cc)
+- Cloud = cloud ASR/LLM/TTS
+- MCP = tool execution path
+- Events now show their触发模块/文件名
