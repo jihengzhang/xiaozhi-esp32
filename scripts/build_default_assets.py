@@ -299,6 +299,11 @@ def generate_index_json(assets_dir, srmodels, text_font, emoji_collection, extra
         json.dump(index_data, f, indent=4, ensure_ascii=False)
     
     print(f"Generated: {index_path}")
+    
+    # Save a copy of index.json to the build folder
+    index_path_bak = os.path.join(os.path.dirname("/home/tester/Desktop/"), "index_bak.json")
+    shutil.copy(index_path, index_path_bak)
+    print(f"Copied index.json to: {index_path_bak}")
 
 
 def generate_config_json(build_dir, assets_dir):

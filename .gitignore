@@ -2,7 +2,7 @@ tmp/
 components/
 managed_components/
 build/
-.vscode/
+# .vscode/
 .devcontainer/
 sdkconfig.old
 dependencies.lock
@@ -16,3 +16,4 @@ main/mmap_generate_emoji.h
 *.bin
 mmap_generate_*.h
 .clangd
+
