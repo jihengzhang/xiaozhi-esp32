@@ -400,6 +400,71 @@ Access in `protocol.cc`:
 // ...existing code...
 ```
 
+---
+
+## Section 6: MR Tools Updates
+
+This section records all updates related to real MR tools, including which files were changed and what was added. It is useful for understanding MCP tool registration, listing, and invocation relationships.
+
+### Current Update (2025-12-28)
+
+- Files and Changes:
+    - `main/MR_Tool.h`: Added `MRTool` wrapper class inheriting from `McpTool`. It sets the MR-only audience flag on construction via `set_mr_only(true)`.
+    - `main/MR_Tool.cc`: Minimal implementation and log tag for MR tools; reserved for future MR-specific behavior.
+    - `main/mcp_server.h`:
+        - Added `bool mr_only_` state and `set_mr_only(bool)`/`mr_only()` to `McpTool`.
+        - `McpTool::to_json()` now includes `annotations.audience` with `"mr"` when MR-only, alongside `"user"` when applicable.
+        - Declared new APIs: `void AddMROnlyTools()` and `void AddMROnlyTool(...)`.
+        - Updated `GetToolsList(...)` signature to `GetToolsList(int id, const std::string& cursor, bool withUserTools, bool withMRTools)`.
+    - `main/mcp_server.cc`:
+        - Implemented `AddMROnlyTool(...)` to mark tools as MR-only and register via common path.
+        - Implemented `AddMROnlyTools()` and registered one starter tool for debugging:
+            - Tool name: `mr.start_examination`
+            - Description: "Start a new MRI exam or examination session."
+            - Return text: `"mr.start_examination: ok"`
+        - Extended `tools/list` handling: parses `withMRTools` (boolean) from request `params` to include MR-only tools in listings.
+        - `GetToolsList(...)` filters MR-only tools unless `withMRTools` is true (similar to user-only filter).
+    - `main/application.cc`: During initialization, now calls `mcp_server.AddMROnlyTools()` after `AddCommonTools()` and `AddUserOnlyTools()` to make MR tools available.
+    - `main/CMakeLists.txt`: Added `MR_Tool.cc` to `SOURCES` so the new files compile.
+
+### Usage and Call Flow
+
+- Listing MR-only tools:
+    - Send MCP request `tools/list` with params including `withMRTools: true` (and optionally `withUserTools`).
+    - Example params:
+        ```json
+        { "cursor": "", "withMRTools": true, "withUserTools": false }
+        ```
+
+- Invoking an MR-only tool:
+    - Use `tools/call` with the tool name, for example:
+        ```json
+        { "name": "mr.start_examination", "arguments": {} }
+        ```
+
+- Response formatting:
+    - MR tools use the existing `McpTool::Call(...)` return envelope with `result.content` array entries of type `text` (or `image` in future).
+
+### Rationale
+
+- Audience separation (`user`, `mr`) ensures sensitive tools are not exposed to AI or general listings unless explicitly requested by the client (`withMRTools`).
+- `AddMROnlyTools()` centralizes MR tool registration for maintainability; additional MR tools can be added there incrementally.
+
+### Future Additions (Tracking Template)
+
+When adding real MR tools, record here:
+
+- Date:
+- Files changed:
+    - `main/mcp_server.cc`: Registered tool `<tool_name>` in `AddMROnlyTools()`
+    - `main/...`: Implemented logic or wrappers
+- Tool spec:
+    - Name: `<tool_name>`
+    - Description: `<short description>`
+    - Input schema: `<properties>`
+    - Audience: `mr`
+    - Notes: `<extra notes or dependencies>`
+
 #### Priority 3: Hardcoded Defaults (Lowest Priority) - **Fallback**
 
 **File: `main/protocols/protocol.cc`**

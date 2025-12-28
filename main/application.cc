@@ -96,6 +96,7 @@ void Application::Initialize() {
     // Add MCP common tools (only once during initialization)
     auto& mcp_server = McpServer::GetInstance();
     mcp_server.AddCommonTools();
+    mcp_server.AddMROnlyTools();
     mcp_server.AddUserOnlyTools();
 
     // Set network event callback for UI updates and network state handling

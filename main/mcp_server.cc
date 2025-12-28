@@ -300,6 +300,21 @@ void McpServer::AddUserOnlyTools() {
     }
 }
 
+void McpServer::AddMROnlyTools() {
+    // For debugging: add a minimal MR-only tool
+    AddMROnlyTool("mr.start_examination",
+        "Start a new MRI exam or examination session. This tool is used to initiate the examination process and prepare the system for capturing and processing MRI data.\n"
+        "Use this tool when you need to begin a new MRI examination session.\n"
+        "Returns a confirmation message indicating that the examination session has started.\n"
+        "User may say start a MR Scan or start an examination to invoke this tool.\n"
+        "用户可能说“开始 MRI 扫描”或“开始扫描” 或“开始核磁扫描”来调用此工具",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "Now started an MR: start_examination invoked via MCP Tool-jihz");
+            return std::string("mr.start_examination: ok");
+        });
+}
+
 void McpServer::AddTool(McpTool* tool) {
     // Prevent adding duplicate tools
     if (std::find_if(tools_.begin(), tools_.end(), [tool](const McpTool* t) { return t->name() == tool->name(); }) != tools_.end()) {
@@ -318,6 +333,12 @@ void McpServer::AddTool(const std::string& name, const std::string& description,
 void McpServer::AddUserOnlyTool(const std::string& name, const std::string& description, const PropertyList& properties, std::function<ReturnValue(const PropertyList&)> callback) {
     auto tool = new McpTool(name, description, properties, callback);
     tool->set_user_only(true);
+    AddTool(tool);
+}
+
+void McpServer::AddMROnlyTool(const std::string& name, const std::string& description, const PropertyList& properties, std::function<ReturnValue(const PropertyList&)> callback) {
+    auto tool = new McpTool(name, description, properties, callback);
+    tool->set_mr_only(true);
     AddTool(tool);
 }
 
@@ -399,6 +420,7 @@ void McpServer::ParseMessage(const cJSON* json) {
     } else if (method_str == "tools/list") {
         std::string cursor_str = "";
         bool list_user_only_tools = false;
+        bool list_mr_only_tools = false;
         if (params != nullptr) {
             auto cursor = cJSON_GetObjectItem(params, "cursor");
             if (cJSON_IsString(cursor)) {
@@ -408,8 +430,12 @@ void McpServer::ParseMessage(const cJSON* json) {
             if (cJSON_IsBool(with_user_tools)) {
                 list_user_only_tools = with_user_tools->valueint == 1;
             }
+            auto with_mr_tools = cJSON_GetObjectItem(params, "withMRTools");
+            if (cJSON_IsBool(with_mr_tools)) {
+                list_mr_only_tools = with_mr_tools->valueint == 1;
+            }
         }
-        GetToolsList(id_int, cursor_str, list_user_only_tools);
+        GetToolsList(id_int, cursor_str, list_user_only_tools, list_mr_only_tools);
     } else if (method_str == "tools/call") {
         if (!cJSON_IsObject(params)) {
             ESP_LOGE(TAG, "tools/call: Missing params");
@@ -452,7 +478,7 @@ void McpServer::ReplyError(int id, const std::string& message) {
     Application::GetInstance().SendMcpMessage(payload);
 }
 
-void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_only_tools) {
+void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_only_tools, bool list_mr_only_tools) {
     const int max_payload_size = 8000;
     std::string json = "{\"tools\":[";
     
@@ -472,6 +498,10 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
         }
 
         if (!list_user_only_tools && (*it)->user_only()) {
+            ++it;
+            continue;
+        }
+        if (!list_mr_only_tools && (*it)->mr_only()) {
             ++it;
             continue;
         }
