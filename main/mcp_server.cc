@@ -313,6 +313,213 @@ void McpServer::AddMROnlyTools() {
             ESP_LOGI(TAG, "Now started an MR: start_examination invoked via MCP Tool-jihz");
             return std::string("mr.start_examination: ok");
         });
+
+    // MR-only tools mapped from mcp_function_calling_definition.py
+    AddMROnlyTool("mr.end_examination",
+        "End the current MRI exam session."
+        "结束当前 MRI 检查。或者 用户可能说“结束 MRI 扫描”或“结束扫描” 或“结束核磁扫描”来调用此工具",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "MR: end_examination");
+            return std::string("mr.end_examination: ok");
+        });
+
+    AddMROnlyTool("mr.load_protocol_from_library",
+        "Load a specified MRI protocol from a given library."
+        "用户可能说“加载扫描协议”来调用此工具",
+        PropertyList({
+            Property("library_name", kPropertyTypeString),
+            Property("protocol_name", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto lib = properties["library_name"].value<std::string>();
+            auto proto = properties["protocol_name"].value<std::string>();
+            ESP_LOGI(TAG, "MR: load_protocol_from_library lib=%s proto=%s", lib.c_str(), proto.c_str());
+            return std::string("mr.load_protocol_from_library: ok");
+        });
+
+    AddMROnlyTool("mr.select_task_or_series",
+        "Select a task or series by index."
+        "用户可能说“选择任务”或“选择序列”来调用此工具"
+        "可能说选择第几个任务"
+        "或者 用户可能说“选择第几个任务”或“选择第几个序列”来调用此工具"
+        "也可能说选择第几行",
+        PropertyList({
+            Property("index", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto idx = properties["index"].value<std::string>();
+            ESP_LOGI(TAG, "MR: select_task_or_series index=%s", idx.c_str());
+            return std::string("mr.select_task_or_series: ok");
+        });
+
+    AddMROnlyTool("mr.duplicate_task_or_series",
+        "Duplicate a task or series by index.",
+        PropertyList({
+            Property("index", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto idx = properties["index"].value<std::string>();
+            ESP_LOGI(TAG, "MR: duplicate_task_or_series index=%s", idx.c_str());
+            return std::string("mr.duplicate_task_or_series: ok");
+        });
+
+    AddMROnlyTool("mr.set_parameter",
+        "Set a parameter for a task or series.",
+        PropertyList({
+            Property("index", kPropertyTypeString),
+            Property("param_name", kPropertyTypeString),
+            Property("param_value", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto idx = properties["index"].value<std::string>();
+            auto pname = properties["param_name"].value<std::string>();
+            auto pval = properties["param_value"].value<std::string>();
+            ESP_LOGI(TAG, "MR: set_parameter index=%s name=%s value=%s", idx.c_str(), pname.c_str(), pval.c_str());
+            return std::string("mr.set_parameter: ok");
+        });
+
+    AddMROnlyTool("mr.save_task_or_series",
+        "Save the RX of a task or series by index.",
+        PropertyList({
+            Property("index", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto idx = properties["index"].value<std::string>();
+            ESP_LOGI(TAG, "MR: save_task_or_series index=%s", idx.c_str());
+            return std::string("mr.save_task_or_series: ok");
+        });
+
+    AddMROnlyTool("mr.prescan",
+        "Perform prescan with method automatic or manual.",
+        PropertyList({
+            Property("method", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto method = properties["method"].value<std::string>();
+            ESP_LOGI(TAG, "MR: prescan method=%s", method.c_str());
+            return std::string("mr.prescan: ok");
+        });
+
+    AddMROnlyTool("mr.stop_prescan",
+        "Stop current prescan.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "MR: stop_prescan");
+            return std::string("mr.stop_prescan: ok");
+        });
+
+    AddMROnlyTool("mr.start_scan",
+        "Start scan for a task or series by index.",
+        PropertyList({
+            Property("index", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto idx = properties["index"].value<std::string>();
+            ESP_LOGI(TAG, "MR: start_scan index=%s", idx.c_str());
+            return std::string("mr.start_scan: ok");
+        });
+
+    AddMROnlyTool("mr.pause_scan",
+        "Pause scanning.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "MR: pause_scan");
+            return std::string("mr.pause_scan: ok");
+        });
+
+    AddMROnlyTool("mr.stop_scan",
+        "Stop scanning.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "MR: stop_scan");
+            return std::string("mr.stop_scan: ok");
+        });
+
+    AddMROnlyTool("mr.resume_scan",
+        "Resume scanning.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "MR: resume_scan");
+            return std::string("mr.resume_scan: ok");
+        });
+
+    AddMROnlyTool("mr.control_fan",
+        "Control fan level (on/low/medium/high/off).",
+        PropertyList({
+            Property("level", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto level = properties["level"].value<std::string>();
+            ESP_LOGI(TAG, "MR: control_fan level=%s", level.c_str());
+            return std::string("mr.control_fan: ok");
+        });
+
+    AddMROnlyTool("mr.control_light",
+        "Control light level (on/low/medium/high/off).",
+        PropertyList({
+            Property("level", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto level = properties["level"].value<std::string>();
+            ESP_LOGI(TAG, "MR: control_light level=%s", level.c_str());
+            return std::string("mr.control_light: ok");
+        });
+
+    AddMROnlyTool("mr.set_hardware_landmark",
+        "Set hardware landmark position (mm).",
+        PropertyList({
+            Property("value", kPropertyTypeInteger)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto val = properties["value"].value<int>();
+            ESP_LOGI(TAG, "MR: set_hardware_landmark value=%d", val);
+            return std::string("mr.set_hardware_landmark: ok");
+        });
+
+    AddMROnlyTool("mr.move_out_to_home_position",
+        "Move table/cradle to HOME position.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "MR: move_out_to_home_position");
+            return std::string("mr.move_out_to_home_position: ok");
+        });
+
+    AddMROnlyTool("mr.move_in_to_scan_position",
+        "Move table/cradle to SCAN position.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            ESP_LOGI(TAG, "MR: move_in_to_scan_position");
+            return std::string("mr.move_in_to_scan_position: ok");
+        });
+
+    AddMROnlyTool("mr.load_patient",
+        "Load patient from work list (local/ris/all).",
+        PropertyList({
+            Property("index", kPropertyTypeString),
+            Property("patient_id", kPropertyTypeString),
+            Property("record_type", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto idx = properties["index"].value<std::string>();
+            auto pid = properties["patient_id"].value<std::string>();
+            auto rtype = properties["record_type"].value<std::string>();
+            ESP_LOGI(TAG, "MR: load_patient index=%s patient_id=%s record_type=%s", idx.c_str(), pid.c_str(), rtype.c_str());
+            return std::string("mr.load_patient: ok");
+        });
+
+    AddMROnlyTool("mr.create_patient",
+        "Create a patient record with id and weight.",
+        PropertyList({
+            Property("patient_id", kPropertyTypeString),
+            Property("weight", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto pid = properties["patient_id"].value<std::string>();
+            auto weight = properties["weight"].value<std::string>();
+            ESP_LOGI(TAG, "MR: create_patient id=%s weight=%s", pid.c_str(), weight.c_str());
+            return std::string("mr.create_patient: ok");
+        });
 }
 
 void McpServer::AddTool(McpTool* tool) {
