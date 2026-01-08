@@ -1,7 +1,7 @@
 {
-  "idf.espIdfPath": "/home/tester/esp/v5.5.1/esp-idf",
+  "idf.espIdfPath": "/home/tester/esp/v5.5.2/esp-idf",
   "idf.toolsPath": "/home/tester/.espressif",
-  "idf.pythonInstallPath": "/home/tester/anaconda3/bin/python",
+  "idf.pythonInstallPath": "/home/tester/miniconda3/bin/python",
   "idf.flashType": "UART",
   "idf.port": "/dev/ttyACM0",
   "idf.monitorPort": "/dev/ttyACM0",
